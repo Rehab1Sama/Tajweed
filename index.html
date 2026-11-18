@@ -181,6 +181,17 @@ svg.i{width:20px;height:20px;flex:none;vertical-align:middle}
 .games-link .gl-a{font-size:1.2rem;color:#ffd88c}
 .games-mini{display:inline-flex;align-items:center;gap:6px;margin:4px 0 10px;padding:5px 14px;border-radius:999px;background:#fcebc9;color:#805716;font-weight:700;font-size:.85rem;text-decoration:none;border:1px solid #f0d39a}
 .games-mini svg{width:16px;height:16px}
+.locked{display:flex;align-items:center;gap:12px;width:100%;margin-top:8px;padding:16px 14px;border:2px dashed #b9c6ca;border-radius:20px;background:repeating-linear-gradient(135deg,#f3f6f5 0 12px,#eaf0ef 12px 24px);color:var(--ink);text-align:start;font:inherit;cursor:pointer}
+.locked .lk-i{flex:none;width:46px;height:46px;border-radius:14px;background:#5f7176;color:#fff;display:grid;place-items:center}
+.locked .lk-i svg{width:24px;height:24px}
+.locked .lk-t{display:flex;flex-direction:column;line-height:1.55}
+.locked .lk-t b{font-family:var(--f-d)}.locked .lk-t span{font-size:.8rem;color:var(--muted)}
+.locked.nudge .lk-i{animation:lkn .4s}
+@keyframes lkn{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+.hw-kind{display:inline-block;margin-inline-start:8px;background:#16323a;color:#ffd88c;border-radius:999px;padding:0 10px;font-size:.72rem;vertical-align:middle}
+.hw-item.exam{border-color:#e6c27a}
+.hw-timer{float:left;font-weight:700;color:#a53630;font-family:var(--f-d)}
+.g-opt.picked{background:#fcebc9;border-color:#e3a33b}
 </style>
 </head>
 <body>
@@ -503,12 +514,18 @@ var FLASK='<svg class="flask" viewBox="0 0 120 120"><path d="M48 14h24M52 14v28L
 
 /* ===== الرئيسية: رفوف المختبر ===== */
 function home(){
-  app.innerHTML='';var S=stamps(),done=LESSONS.filter(function(l){return S[l.id];}).length;
+  app.innerHTML='';var S=stamps(),VIS=LESSONS.filter(function(l){return l.lvl===1||lv2Open();}),done=VIS.filter(function(l){return S[l.id];}).length;
   var p=E('section','plate');p.innerHTML='<small>مقرأة سنا الآي · دورة مجانية</small><h1>مختبر التجويد</h1><p>كل درس قارورة… أتقنيه لتمتلئ</p>'+
-    '<div class="tube"><div class="t"><i style="width:'+Math.max(4,Math.round(done/LESSONS.length*100))+'%"></i></div><span>'+ar(done)+' / '+ar(LESSONS.length)+'</span></div>';
+    '<div class="tube"><div class="t"><i style="width:'+Math.max(4,Math.round(done/VIS.length*100))+'%"></i></div><span>'+ar(done)+' / '+ar(VIS.length)+'</span></div>';
   app.appendChild(p);
   [1,2].forEach(function(lv){
     var L=LESSONS.filter(function(l){return l.lvl===lv;});
+    if(lv===2&&!lv2Open()){
+      app.appendChild(H('div','shelf-h','<b>الرف الثاني</b><span>المستوى الثاني · مغلق</span>'));
+      var lk=B('locked',null,function(){lk.classList.remove('nudge');void lk.offsetWidth;lk.classList.add('nudge');});
+      lk.innerHTML='<span class="lk-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="lk-t"><b>خزانة المستوى الثاني مغلقة</b><span>'+ar(L.length)+' دروس تُفتح بعد إتمام المستوى الأول بإذن الله</span></span>';
+      app.appendChild(lk);return;
+    }
     app.appendChild(H('div','shelf-h','<b>الرف '+(lv===1?'الأول':'الثاني')+'</b><span>المستوى '+(lv===1?'الأول':'الثاني')+' · '+ar(L.length)+' دروس</span>'));
     var sh=E('div','shelf');
     L.forEach(function(l){var f=level(l.id);var b=B('ves',null,function(){go(l.id);});b.setAttribute('aria-label',l.title);
@@ -523,8 +540,11 @@ function home(){
 
 /* ===== التنقل ===== */
 function go(id,tab){location.hash=id?('#'+id+(tab?'/'+tab:'')):'';}
+function lv2Open(){try{return localStorage.getItem('lab-lv2')==='1';}catch(e){return false;}}
+window.__lv2Open=lv2Open;
 function route(){
   var h=decodeURIComponent(location.hash.slice(1)).split('/');
+  if(h[0]&&BY[h[0]]&&BY[h[0]].lvl===2&&!lv2Open()){location.hash='';return;}
   if(h[0]&&BY[h[0]])lesson(BY[h[0]],h[1]||'learn');else home();
   window.scrollTo(0,0);
 }
@@ -991,10 +1011,10 @@ route();
     var A=(state&&state.assignments)||[];
     if(!A.length){hwWrap.appendChild(E('p','hw-empty','لا توجد واجبات الآن 🌸'));return;}
     A.forEach(function(a){
-      var b=E('button','hw-item');b.type='button';b.appendChild(E('b',null,a.title));
+      var ex=a.kind==='exam';var b=E('button','hw-item'+(ex?' exam':''));b.type='button';var tt=E('b',null,a.title);if(ex){var bd=E('span','hw-kind','اختبار');tt.appendChild(bd);}b.appendChild(tt);
       if(a.note)b.appendChild(E('small',null,a.note));
       var n=(a.custom||[]).length+(a.stations&&a.stations.length?a.qcount:0);
-      b.appendChild(E('small',null,qw(n)+(a.due_at?' · آخر موعد: '+fmtDate(a.due_at):'')));
+      b.appendChild(E('small',null,qw(n)+(ex&&a.minutes?' · '+ar(a.minutes)+' دقيقة':'')+(ex?' · محاولة واحدة':'')+(a.due_at?' · آخر موعد: '+fmtDate(a.due_at):'')));
       var late=a.due_at&&new Date(a.due_at)<new Date()&&a.score==null;
       b.appendChild(E('span','hw-st'+(a.score!=null?' done':late?' late':''),a.score!=null?('✓ أنجزتِه: '+ar(a.score)+' من '+ar(a.total)):late?'متأخر':'لم يُنجز بعد'));
       b.addEventListener('click',function(){runHw(a);});hwWrap.appendChild(b);
@@ -1002,19 +1022,24 @@ route();
   }
   function shuf(x){x=x.slice();for(var i=x.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=x[i];x[i]=x[j];x[j]=t;}return x;}
   function runHw(a){
-    var items=[];
+    var EX=a.kind==='exam';
+    if(EX&&a.score!=null){top(a.title,listHw);var c0=E('div','g-card');c0.appendChild(E('p','g-big','سلَّمتِ هذا الاختبار'));c0.appendChild(E('p','g-rule','نتيجتكِ: '+ar(a.score)+' من '+ar(a.total)+'. الاختبار محاولة واحدة فقط.'));hwWrap.appendChild(c0);return;}
+    if(EX&&!confirm('هذا اختبار بمحاولة واحدة'+(a.minutes?' ومدته '+ar(a.minutes)+' دقيقة':'')+'. لا تخرجي حتى تُنهيه. هل أنتِ مستعدة؟'))return;
+    var items=[],timer=null,endAt=a.minutes?Date.now()+a.minutes*60000:0,finished=false;
     (a.custom||[]).forEach(function(c,i){var o=shuf(c.o.map(function(t,k){return {t:t,r:k===c.a};}));items.push({q:c.q,o:o.map(function(x){return x.t;}),a:o.map(function(x){return x.r;}).indexOf(true),k:'custom'});});
     if(a.stations&&a.stations.length&&window.__bankItems)window.__bankItems(a.stations,a.qcount).forEach(function(it){items.push(it);});
     items=shuf(items);var i=0,right=0,det=[];
     function q(){
-      top(a.title,listHw);
+      top(a.title,EX?function(){if(confirm('إن خرجتِ الآن يُسلَّم الاختبار بما أجبتِ. هل تخرجين؟'))end();}:listHw);
       var c=E('div','g-card');
-      c.appendChild(E('span','g-count','السؤال '+ar(i+1)+' من '+ar(items.length)));
+      var cnt=E('span','g-count','السؤال '+ar(i+1)+' من '+ar(items.length));c.appendChild(cnt);
+      if(EX&&endAt){var tm=E('span','hw-timer');c.appendChild(tm);var tk=function(){if(finished)return;var r=Math.max(0,Math.round((endAt-Date.now())/1000));tm.textContent='الوقت '+ar(Math.floor(r/60))+':'+ar(String(r%60).padStart(2,'0'));if(r<=0){end();}};tk();clearInterval(timer);timer=setInterval(tk,1000);}
       var it=items[i];c.appendChild(E('p','g-q',it.q));
       var opts=E('div','g-opts'),fb=E('div','g-fb'),done=false;
       it.o.forEach(function(t,k){var b=E('button','g-opt',t);b.type='button';b.addEventListener('click',function(){
         if(done)return;done=true;var ok=k===it.a;if(ok)right++;
         det.push({q:it.q,ok:ok});window.__labLog({source:'homework',station:it.k==='custom'?null:it.k,question:it.q,correct:ok,assignment_id:a.id});
+        if(EX){b.classList.add('picked');i++;if(i<items.length)setTimeout(q,250);else setTimeout(end,250);return;}
         b.classList.add(ok?'right':'wrong');opts.children[it.a].classList.add('right');
         fb.className='g-fb '+(ok?'ok':'no');fb.textContent=ok?'أحسنتِ!':'الصحيح باللون الأخضر';
         var nx=E('button','btn g-go',i<items.length-1?'التالي ‹':'إنهاء الواجب');nx.type='button';nx.addEventListener('click',function(){i++;if(i<items.length)q();else end();});c.appendChild(nx);
@@ -1022,16 +1047,19 @@ route();
       c.appendChild(opts);c.appendChild(fb);hwWrap.appendChild(c);
     }
     function end(){
+      if(finished)return;finished=true;clearInterval(timer);
       push({t:'s',id:uid(),d:{id:a.id,r:right,n:items.length,det:det}});
       a.score=Math.max(a.score||0,right);a.total=items.length;updHw();
       top(a.title,listHw);var c=E('div','g-card');
       c.appendChild(E('p','g-big','أصبتِ '+ar(right)+' من '+ar(items.length)));
-      c.appendChild(E('p','g-rule',right/items.length>=.8?'ما شاء الله، أحسنتِ! وصلت نتيجتكِ إلى معلمتكِ 🌸':'وصلت نتيجتكِ إلى معلمتكِ. راجعي الدرس وأعيدي الواجب إن أحببتِ، وتُحسب أعلى نتيجة.'));
+      c.appendChild(E('p','g-rule',EX?'تم تسليم الاختبار، ووصلت نتيجتكِ إلى معلمتكِ 🌸':right/items.length>=.8?'ما شاء الله، أحسنتِ! وصلت نتيجتكِ إلى معلمتكِ 🌸':'وصلت نتيجتكِ إلى معلمتكِ. راجعي الدرس وأعيدي الواجب إن أحببتِ، وتُحسب أعلى نتيجة.'));
       var b=E('button','btn g-go','العودة إلى الواجبات');b.type='button';b.addEventListener('click',listHw);c.appendChild(b);hwWrap.appendChild(c);
     }
     if(!items.length){top(a.title,listHw);hwWrap.appendChild(E('p','hw-empty','لا أسئلة في هذا الواجب'));return;}
     q();
   }
+  /* ===== إعدادات المعلمة (فتح المستوى الثاني) ===== */
+  rpc('public_settings',{}).then(function(st){var v=st&&st.level2_open?'1':'0';if(ls('lab-lv2')!==v){ls('lab-lv2',v);if(window.__labRefresh&&!/^#[a-z]+\/(quiz|micro|lab)/.test(location.hash))window.__labRefresh();}}).catch(function(){});
   /* ===== البدء ===== */
   if(!tok){setMe();if(REQUIRE_LOGIN)showLogin();}else{setMe();sync();flush();}
   if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});

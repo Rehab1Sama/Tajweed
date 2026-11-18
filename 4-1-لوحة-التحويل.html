@@ -69,6 +69,7 @@ button{font:inherit;cursor:pointer;-webkit-user-select:none;user-select:none}
 .shake{animation:shake .38s}
 @keyframes shake{25%{transform:translateX(6px)}75%{transform:translateX(-6px)}}
 .end{text-align:center}
+.sent{font-size:.82rem;color:#9fd8c4;margin:0 0 14px}.sent a{color:#ffd88c}
 .stars{font-size:2.6rem;letter-spacing:.2em;color:rgba(255,255,255,.2);margin-top:6px}
 .stars .on{color:#f0b550;text-shadow:0 0 18px rgba(240,181,80,.6)}
 .big{font:700 3rem var(--f-d);color:#fff;line-height:1.1}
@@ -147,6 +148,7 @@ button{font:inherit;cursor:pointer;-webkit-user-select:none;user-select:none}
   <div class="big"><span id="fScore">٠</span> <small>من <span id="fMax">٠</span></small></div>
   <div class="rank" id="rank"></div>
   <div class="endstats"><span><b id="eFirst">٠</b>إجابات من أول مرة</span><span><b id="eStreak">٠</b>أطول تتابع</span></div>
+  <p class="sent" id="sent"></p>
   <div><button class="cta" id="again">إعادة التجربة</button></div>
   
 </section>
@@ -247,9 +249,21 @@ function finish(){
   if(S.score>getBest()){try{localStorage.setItem(bestKey(),String(S.score))}catch(e){}}
   paintBest();
   sfx.done();
-  try{window.LAB_REPORT&&window.LAB_REPORT({game:cfg.id,score:S.score,max:max})}catch(e){}
+  report(cfg.id,S.score,max);
   show('end');
 }
+/* إرسال النتيجة للمعلمة إن كانت الطالبة مسجَّلة في المختبر */
+var CLOUD='https://ostldlkpvxbjyhcvpuue.supabase.co',CKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdGxkbGtwdnhianloY3ZwdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyMTc2NTIsImV4cCI6MjEwOTc5MzY1Mn0.SWK6wV-vjLasNN3sOOXrRVOPM4_1PjySYxo5ED1qPE8';
+function report(game,score,max){
+  var tok=null,el=$('#sent');try{tok=localStorage.getItem('lab-token')}catch(e){}
+  if(!el)return;
+  if(!tok){el.innerHTML='لم تُرسَل النتيجة لمعلمتكِ لأنكِ لم تسجِّلي الدخول. <a href="index.html">سجِّلي الدخول في المختبر</a> ثم العبي مرة أخرى.';return}
+  el.textContent='جارٍ إرسال نتيجتكِ إلى معلمتكِ…';
+  fetch(CLOUD+'/rest/v1/rpc/tj_save_game',{method:'POST',headers:{apikey:CKEY,Authorization:'Bearer '+CKEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:tok,p_game:game,p_score:score,p_max:max})})
+    .then(function(r){el.textContent=r.ok?'وصلت نتيجتكِ إلى معلمتكِ.':'تعذَّر إرسال النتيجة، حاولي لاحقًا.'})
+    .catch(function(){el.textContent='لا يوجد اتصال، فلم تُرسَل النتيجة.'});
+}
+window.LAB_SEND=report;
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 return {init:init,award:award,miss:miss,finish:finish,setRound:setRound,sfx:sfx,ar:ar,shuffle:shuffle,RM:RM,buzz:buzz,floatAt:floatAt,state:function(){return S}};
 })();

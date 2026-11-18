@@ -213,7 +213,7 @@ button{font:inherit;cursor:pointer}
 </section>
 
 <!-- ===== النتيجة ===== -->
-<section class="hero end" id="end" hidden>
+<section class="hero end" id="end" hidden><p class="sent" id="sent" style="font-size:.82rem;color:#9fd8c4"></p>
   <div class="eyebrow">اكتمل الفحص المجهري</div>
   <div class="stars" id="stars">★★★</div>
   <div class="big"><span id="fScore">٠</span> <small>من <span id="fMax">١٤٠</span></small></div>
@@ -473,5 +473,10 @@ $('#again').addEventListener('click',start);
 S=newState();
 })();
 </script>
+<script>(function(){var C='https://ostldlkpvxbjyhcvpuue.supabase.co',K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdGxkbGtwdnhianloY3ZwdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyMTc2NTIsImV4cCI6MjEwOTc5MzY1Mn0.SWK6wV-vjLasNN3sOOXrRVOPM4_1PjySYxo5ED1qPE8';
+window.LAB_REPORT=function(d){var el=document.getElementById('sent'),t=null;try{t=localStorage.getItem('lab-token')}catch(e){}
+if(!t){el.innerHTML='لم تُرسَل النتيجة لمعلمتكِ لأنكِ لم تسجِّلي الدخول. <a style="color:#ffd88c" href="index.html">سجِّلي الدخول في المختبر</a> ثم العبي مرة أخرى.';return}
+el.textContent='جارٍ إرسال نتيجتكِ إلى معلمتكِ…';
+fetch(C+'/rest/v1/rpc/tj_save_game',{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},body:JSON.stringify({p_token:t,p_game:'microscope',p_score:d.score,p_max:d.max})}).then(function(r){el.textContent=r.ok?'وصلت نتيجتكِ إلى معلمتكِ.':'تعذَّر إرسال النتيجة.'}).catch(function(){el.textContent='لا يوجد اتصال، فلم تُرسَل النتيجة.'});};})();</script>
 </body>
 </html>

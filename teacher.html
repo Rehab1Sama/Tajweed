@@ -76,6 +76,11 @@ var STN=[["mabadi","التجويد ومبادئه"],["maratib","مراتب ال�
 var VS=[];
 var URL_='https://ostldlkpvxbjyhcvpuue.supabase.co',KEY_='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdGxkbGtwdnhianloY3ZwdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyMTc2NTIsImV4cCI6MjEwOTc5MzY1Mn0.SWK6wV-vjLasNN3sOOXrRVOPM4_1PjySYxo5ED1qPE8';
 var SN={};STN.forEach(function(x){SN[x[0]]=x[1];});
+var GN={unknown:'العينة المجهولة',sorter:'أنابيب التصنيف',errors:'مختبر كشف الأخطاء',microscope:'تحدي المجهر',madd:'ميزان المدود',ghunna:'جهاز قياس الغنة',
+ ch1_memory:'خزانة المبادئ العشرة',ch1_haq:'حقُّ الحرف ومستحقُّه',ch1_chain:'سلسلة التعريف',ch2_speedo:'عدَّاد السرعة',ch2_dishes:'أطباق العيِّنات',ch2_conveyor:'جهاز الطرد المركزي',
+ ch3_periodic:'الجدول الدوري للنون',ch3_equation:'معادلة التفاعل',ch3_timed:'مؤقِّت التفاعل',ch4_switch:'لوحة التحويل',ch4_particles:'عدَّاد الجسيمات',ch4_equation:'أكملي التفاعل',
+ ch5_scale:'ميزان القوة',ch5_pulse:'نابض الحركات',ch5_sorter:'فرز المدود'};
+function gname(g){return GN[g]||g;}
 function ar(n){return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];});}
 function pct(a,b){return b?Math.round(a*100/b):null;}
 function E(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
@@ -97,7 +102,7 @@ function level(s){
 }
 function colorFor(p){return p==null?'#ccc':p>=85?'#2F8F63':p>=60?'#D9A441':'#C0405E';}
 function logout(){localStorage.removeItem('lab-admin');TOK=null;render();}
-function load(){return rpc('admin_overview',{p_token:TOK}).then(function(d){DATA=d;}).catch(function(e){if(/ADMIN/.test(e.message)){logout();throw e;}throw e;});}
+function load(){return Promise.all([rpc('admin_overview',{p_token:TOK}),rpc('admin_games',{p_token:TOK}).catch(function(){return {games:[],rows:[],level2_open:false};})]).then(function(r){DATA=r[0];DATA.gm=r[1];}).catch(function(e){if(/ADMIN/.test(e.message)){logout();throw e;}throw e;});}
 function render(){
   app.innerHTML='';
   if(!TOK){
@@ -110,10 +115,11 @@ function render(){
   var w=E('div','wrap');app.appendChild(w);
   var hd=H('<div class="hd"><span class="logo"></span><div><h1>لوحة المعلمة</h1><small>مختبر التجويد</small></div><span class="sp"></span><button class="btn sec" id="rf">تحديث ↻</button></div>');
   hd.querySelector('#rf').onclick=function(){load().then(render);};w.appendChild(hd);
-  var tabs=E('div','tabs');[['over','نظرة عامة'],['girls','البنات'],['hw','الواجبات'],['qs','الأسئلة الصعبة'],['set','الإعدادات']].forEach(function(t){
+  var tabs=E('div','tabs');[['over','نظرة عامة'],['girls','البنات'],['hw','الواجبات والاختبارات'],['games','الألعاب'],['qs','الأسئلة الصعبة'],['set','الإعدادات']].forEach(function(t){
     var b=E('button','tab',t[1]);b.setAttribute('aria-selected',TAB===t[0]);b.onclick=function(){TAB=t[0];render();};tabs.appendChild(b);});
   w.appendChild(tabs);
-  var V={over:vOver,girls:vGirls,hw:vHw,qs:vQs,set:vSet}[TAB];V(w);
+  setTimeout(function(){var sb=tabs.querySelector('[aria-selected="true"]');if(sb)sb.scrollIntoView({inline:'center',block:'nearest'});},0);
+  var V={over:vOver,girls:vGirls,hw:vHw,games:vGames,qs:vQs,set:vSet}[TAB];V(w);
 }
 function boot(){app.innerHTML='<div class="login"><p class="muted">جارٍ التحميل…</p></div>';load().then(render).catch(function(){render();});}
 /* ===== نظرة عامة ===== */
@@ -176,8 +182,11 @@ function openGirl(g){
     c.appendChild(bars);body.appendChild(c);
     if(d.activity.length){var c4=E('div','card');c4.appendChild(E('h2',null,'نشاطها في آخر ٣٠ يومًا'));var mx=Math.max.apply(null,d.activity.map(function(x){return x.n;}));var sp=E('div','spark');d.activity.forEach(function(x){var i=E('i');i.style.height=(x.n*100/mx)+'%';i.title=x.d+': '+x.n;sp.appendChild(i);});c4.appendChild(sp);body.appendChild(c4);}
     var c2=E('div','card');c2.appendChild(E('h2',null,'الواجبات'));
-    if(!d.subs.length)c2.appendChild(E('p','muted','لم تُسلِّم واجبات بعد.'));else{var t=H('<table><tr><th>الواجب</th><th>الدرجة</th><th>المحاولات</th></tr></table>');d.subs.forEach(function(x){t.appendChild(TR('<tr><td>'+esc(x.title)+'</td><td>'+ar(x.score)+' / '+ar(x.total)+'</td><td>'+ar(x.tries)+'</td></tr>'));});c2.appendChild(t);}
+    if(!d.subs.length)c2.appendChild(E('p','muted','لم تُسلِّم واجبات بعد.'));else{var t=H('<table><tr><th>الواجب</th><th>الدرجة</th><th>المحاولات</th></tr></table>');d.subs.forEach(function(x){t.appendChild(TR('<tr><td>'+esc(x.title)+(x.kind==='exam'?' <small class="muted">(اختبار)</small>':'')+'</td><td>'+ar(x.score)+' / '+ar(x.total)+'</td><td>'+ar(x.tries)+'</td></tr>'));});c2.appendChild(t);}
     body.appendChild(c2);
+    var cg=E('div','card');cg.appendChild(E('h2',null,'الألعاب'));
+    if(!(d.games||[]).length)cg.appendChild(E('p','muted','لم تلعب أي لعبة وهي مسجِّلة الدخول.'));else{var tg2=H('<table><tr><th>اللعبة</th><th>أفضل نتيجة</th><th>مرات اللعب</th></tr></table>');d.games.forEach(function(x){tg2.appendChild(TR('<tr><td>'+esc(gname(x.game))+'</td><td>'+ar(x.best)+' / '+ar(x.max)+'</td><td>'+ar(x.plays)+'</td></tr>'));});cg.appendChild(tg2);}
+    body.appendChild(cg);
     var c3=E('div','card');c3.appendChild(E('h2',null,'آخر أخطائها'));
     if(!d.wrong.length)c3.appendChild(E('p','muted','لا أخطاء مسجَّلة.'));else{var l=E('div','lst');d.wrong.forEach(function(x){l.appendChild(H('<div class="wq">'+esc(x.question)+' <small class="muted">· '+(SN[x.station]||'واجب')+'</small></div>'));});c3.appendChild(l);}
     body.appendChild(c3);
@@ -191,8 +200,9 @@ function openGirl(g){
 }
 /* ===== الواجبات ===== */
 function vHw(w){
-  var c=E('div','card');c.appendChild(E('h2',null,'واجب جديد'));
-  var f=H('<form class="f"><label>العنوان<input class="in" name="t" required placeholder="مثل: واجب النون الساكنة"></label><label>ملاحظة للبنات (اختياري)<textarea class="in" name="no" rows="2"></textarea></label><div><b style="font-size:.9rem">أسئلة عشوائية من دروس:</b><div class="chips" id="st" style="margin-top:6px"></div></div><label>عدد الأسئلة العشوائية<input class="in" name="q" type="number" min="0" max="50" value="10"></label><div><b style="font-size:.9rem">أسئلة من عندكِ:</b><div id="cqs" class="lst" style="margin-top:6px"></div><button type="button" class="btn sec" id="addq" style="margin-top:8px">+ إضافة سؤال</button></div><label>آخر موعد (اختياري)<input class="in" name="d" type="date"></label><label>لمن؟<select class="in" name="to"><option value="">كل البنات</option></select></label><button class="btn gold">إرسال الواجب</button></form>');
+  var c=E('div','card');c.appendChild(E('h2',null,'واجب أو اختبار جديد'));
+  var f=H('<form class="f"><label>النوع<select class="in" name="k"><option value="hw">واجب: يظهر الجواب الصحيح، وتُعاد المحاولة وتُحسب أعلى نتيجة</option><option value="exam">اختبار: محاولة واحدة، ولا يظهر الجواب إلا بعد التسليم</option></select></label><label id="mnl" hidden>مدة الاختبار بالدقائق (اختياري)<input class="in" name="m" type="number" min="1" max="180" placeholder="مثل: ١٥"></label><label>العنوان<input class="in" name="t" required placeholder="مثل: واجب النون الساكنة"></label><label>ملاحظة للبنات (اختياري)<textarea class="in" name="no" rows="2"></textarea></label><div><b style="font-size:.9rem">أسئلة عشوائية من دروس:</b><div class="chips" id="st" style="margin-top:6px"></div></div><label>عدد الأسئلة العشوائية<input class="in" name="q" type="number" min="0" max="50" value="10"></label><div><b style="font-size:.9rem">أسئلة من عندكِ:</b><div id="cqs" class="lst" style="margin-top:6px"></div><button type="button" class="btn sec" id="addq" style="margin-top:8px">+ إضافة سؤال</button></div><label>آخر موعد (اختياري)<input class="in" name="d" type="date"></label><label>لمن؟<select class="in" name="to"><option value="">كل البنات</option></select></label><button class="btn gold">إرسال الواجب</button></form>');
+  f.k.onchange=function(){f.querySelector('#mnl').hidden=f.k.value!=='exam';f.querySelector('.btn.gold').textContent=f.k.value==='exam'?'إرسال الاختبار':'إرسال الواجب';};
   var sel={};var st=f.querySelector('#st');STN.forEach(function(x){var b=E('button','chip',x[1]);b.type='button';b.setAttribute('aria-pressed','false');b.onclick=function(){sel[x[0]]=!sel[x[0]];b.setAttribute('aria-pressed',!!sel[x[0]]);};st.appendChild(b);});
   DATA.circles.forEach(function(x){var o=E('option',null,'حلقة: '+x);o.value='c:'+x;f.to.appendChild(o);});
   DATA.students.filter(function(s){return s.active;}).forEach(function(s){var o=E('option',null,'البنت: '+s.name);o.value='s:'+s.id;f.to.appendChild(o);});
@@ -204,13 +214,13 @@ function vHw(w){
     var stations=Object.keys(sel).filter(function(k){return sel[k];}),qc=stations.length?+f.q.value||0:0;
     if(!custom.length&&!qc){toast('اختاري درسًا أو أضيفي سؤالًا');return;}
     var to=f.to.value,circle=to.indexOf('c:')===0?to.slice(2):null,studs=to.indexOf('s:')===0?[to.slice(2)]:null;
-    rpc('admin_save_assignment',{p_token:TOK,p_title:f.t.value,p_note:f.no.value,p_stations:stations,p_qcount:qc,p_custom:custom,p_due:f.d.value?new Date(f.d.value+'T23:59:00').toISOString():null,p_circle:circle,p_students:studs})
-      .then(function(r){if(!r.ok){toast('تعذَّر الحفظ');return;}toast('تم إرسال الواجب 🌸');load().then(render);}).catch(function(){toast('تعذَّر الاتصال');});};
+    rpc('admin_save_assignment',{p_token:TOK,p_title:f.t.value,p_note:f.no.value,p_stations:stations,p_qcount:qc,p_custom:custom,p_due:f.d.value?new Date(f.d.value+'T23:59:00').toISOString():null,p_circle:circle,p_students:studs,p_kind:f.k.value,p_minutes:f.k.value==='exam'&&f.m.value?+f.m.value:null})
+      .then(function(r){if(!r.ok){toast('تعذَّر الحفظ');return;}toast(f.k.value==='exam'?'تم إرسال الاختبار 🌸':'تم إرسال الواجب 🌸');load().then(render);}).catch(function(){toast('تعذَّر الاتصال');});};
   c.appendChild(f);w.appendChild(c);
-  var c2=E('div','card');c2.appendChild(E('h2',null,'الواجبات المرسلة'));var l=E('div','lst');
+  var c2=E('div','card');c2.appendChild(E('h2',null,'الواجبات والاختبارات المرسلة'));var l=E('div','lst');
   if(!DATA.assignments.length)l.appendChild(E('p','muted','لم تُرسَل واجبات بعد.'));
   DATA.assignments.forEach(function(a){var p=a.avg!=null?Math.round(a.avg*100):null;
-    var r=H('<button class="row"><div class="ring" style="--p:'+(p||0)+';--c:'+colorFor(p)+'">'+(p==null?'—':ar(p)+'٪')+'</div><div class="nm"><b>'+esc(a.title)+'</b><small>سلَّمته '+ar(a.subs)+(a.target_circle?' · حلقة '+esc(a.target_circle):'')+(a.due_at?' · حتى '+ar(new Date(a.due_at).toLocaleDateString('ar')):'')+'</small></div><span class="pill '+(a.active?'p-good':'p-off')+'">'+(a.active?'مفعَّل':'مخفي')+'</span></button>');
+    var r=H('<button class="row"><div class="ring" style="--p:'+(p||0)+';--c:'+colorFor(p)+'">'+(p==null?'—':ar(p)+'٪')+'</div><div class="nm"><b>'+esc(a.title)+(a.kind==='exam'?' <span class="pill p-mid">اختبار'+(a.minutes?' · '+ar(a.minutes)+' د':'')+'</span>':'')+'</b><small>سلَّمته '+ar(a.subs)+(a.target_circle?' · حلقة '+esc(a.target_circle):'')+(a.due_at?' · حتى '+ar(new Date(a.due_at).toLocaleDateString('ar')):'')+'</small></div><span class="pill '+(a.active?'p-good':'p-off')+'">'+(a.active?'مفعَّل':'مخفي')+'</span></button>');
     r.onclick=function(){openHw(a);};l.appendChild(r);});
   c2.appendChild(l);w.appendChild(c2);
 }
@@ -225,6 +235,23 @@ function openHw(a){
     var b=E('button','btn '+(a.active?'warn':'sec'),a.active?'إخفاء الواجب عن البنات':'إظهاره مرة أخرى');b.onclick=function(){rpc('admin_toggle_assignment',{p_token:TOK,p_id:a.id,p_active:!a.active}).then(function(){document.querySelector('.modal').remove();load().then(render);});};body.appendChild(b);
   });
 }
+/* ===== الألعاب ===== */
+function vGames(w){
+  var G=DATA.gm||{games:[],rows:[]};
+  var c=E('div','card');c.appendChild(E('h2',null,'نتائج الألعاب'));c.appendChild(E('p','muted','تظهر هنا نتائج البنات اللاتي لعبن وهنَّ مسجِّلات الدخول في المختبر.'));
+  if(!G.games.length){c.appendChild(E('p','muted','لا توجد نتائج ألعاب بعد.'));w.appendChild(c);return;}
+  var l=E('div','lst');G.games.forEach(function(g){var p=Math.round((g.avg||0)*100);l.appendChild(H('<div class="row" style="cursor:default"><div class="ring" style="--p:'+p+';--c:'+colorFor(p)+'">'+ar(p)+'٪</div><div class="nm"><b>'+esc(gname(g.game))+'</b><small>لعبتها '+ar(g.players)+' · مرات اللعب '+ar(g.plays)+' · '+ago(g.last_at)+'</small></div></div>'));});
+  c.appendChild(l);w.appendChild(c);
+  var c2=E('div','card');c2.appendChild(E('h2',null,'نتائج كل بنت'));
+  var tb=H('<div class="toolbar"><input class="in" placeholder="بحث بالاسم"><select class="in" style="flex:0 0 auto;width:auto"><option value="">كل الألعاب</option></select></div>');
+  G.games.forEach(function(g){var o=E('option',null,gname(g.game));o.value=g.game;tb.querySelector('select').appendChild(o);});c2.appendChild(tb);
+  var box=E('div');c2.appendChild(box);
+  function fill(){var q=tb.querySelector('input').value.trim(),gg=tb.querySelector('select').value;box.innerHTML='';
+    var t=H('<table><tr><th>البنت</th><th>اللعبة</th><th>أفضل نتيجة</th><th>مرات</th></tr></table>');
+    G.rows.filter(function(r){return (!q||r.name.indexOf(q)>-1)&&(!gg||r.game===gg);}).forEach(function(r){var p=pct(r.best,r.max);t.appendChild(TR('<tr><td>'+esc(r.name)+'</td><td>'+esc(gname(r.game))+'</td><td><b style="color:'+colorFor(Math.min(100,p))+'">'+ar(r.best)+'</b> / '+ar(r.max)+'</td><td>'+ar(r.plays)+'</td></tr>'));});
+    box.appendChild(t);}
+  tb.querySelector('input').oninput=fill;tb.querySelector('select').onchange=fill;fill();w.appendChild(c2);
+}
 /* ===== الأسئلة الصعبة ===== */
 function vQs(w){var c=E('div','card');c.appendChild(E('h2',null,'الأسئلة التي تخطئ فيها البنات أكثر'));c.appendChild(E('p','muted','من البوابات وبنك الأسئلة والواجبات، للبنات المفعَّلات فقط.'));qList(c,DATA.missed);w.appendChild(c);}
 /* ===== الإعدادات ===== */
@@ -232,6 +259,12 @@ function vSet(w){
   var site=location.href.replace(/teacher\.html.*$/,'index.html');
   var c=E('div','card');c.appendChild(E('h2',null,'رابط البنات'));c.appendChild(H('<p style="word-break:break-all;direction:ltr;text-align:left;margin:0 0 8px">'+esc(site)+'</p>'));
   var cp=E('button','btn sec','نسخ الرابط');cp.onclick=function(){navigator.clipboard.writeText(site).then(function(){toast('تم النسخ');});};c.appendChild(cp);w.appendChild(c);
+  var open=!!(DATA.gm&&DATA.gm.level2_open);
+  var cl=E('div','card');cl.appendChild(E('h2',null,'المستوى الثاني'));
+  cl.appendChild(E('p','muted',open?'دروس المستوى الثاني مفتوحة للبنات الآن.':'دروس المستوى الثاني مغلقة: تظهر للبنات خزانةً مقفلة ولا يستطعن فتحها.'));
+  var tl=E('button','btn '+(open?'warn':'gold'),open?'إغلاق المستوى الثاني':'فتح المستوى الثاني للبنات');
+  tl.onclick=function(){if(!confirm(open?'إغلاق دروس المستوى الثاني عن البنات؟':'فتح دروس المستوى الثاني لكل البنات؟'))return;rpc('admin_set_setting',{p_token:TOK,p_key:'level2_open',p_value:!open}).then(function(r){toast(r.ok?(open?'أُغلق المستوى الثاني':'فُتح المستوى الثاني'):'تعذَّر الحفظ');load().then(render);});};
+  cl.appendChild(tl);w.appendChild(cl);
   var c2=E('div','card');c2.appendChild(E('h2',null,'تغيير رمز المعلمة'));
   var f=H('<form class="f"><input class="in" type="password" inputmode="numeric" placeholder="الرمز الجديد (٦ أرقام على الأقل)" required minlength="6"><button class="btn">حفظ</button></form>');
   f.onsubmit=function(e){e.preventDefault();rpc('admin_change_pin',{p_token:TOK,p_pin:f.querySelector('input').value}).then(function(r){toast(r.ok?'تم تغيير الرمز':'الرمز قصير');});};c2.appendChild(f);w.appendChild(c2);
