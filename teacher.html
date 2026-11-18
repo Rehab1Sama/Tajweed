@@ -102,7 +102,7 @@ function level(s){
 }
 function colorFor(p){return p==null?'#ccc':p>=85?'#2F8F63':p>=60?'#D9A441':'#C0405E';}
 function logout(){localStorage.removeItem('lab-admin');TOK=null;render();}
-function load(){return Promise.all([rpc('admin_overview',{p_token:TOK}),rpc('admin_games',{p_token:TOK}).catch(function(){return {games:[],rows:[],level2_open:false};})]).then(function(r){DATA=r[0];DATA.gm=r[1];}).catch(function(e){if(/ADMIN/.test(e.message)){logout();throw e;}throw e;});}
+function load(){return Promise.all([rpc('admin_overview',{p_token:TOK}),rpc('admin_games',{p_token:TOK}).catch(function(){return {games:[],rows:[],level2_open:false};}),rpc('admin_listen',{p_token:TOK}).catch(function(){return {words:{},counts:[],rows:[]};})]).then(function(r){DATA=r[0];DATA.gm=r[1];DATA.ls=r[2];}).catch(function(e){if(/ADMIN/.test(e.message)){logout();throw e;}throw e;});}
 function render(){
   app.innerHTML='';
   if(!TOK){
@@ -115,11 +115,11 @@ function render(){
   var w=E('div','wrap');app.appendChild(w);
   var hd=H('<div class="hd"><span class="logo"></span><div><h1>لوحة المعلمة</h1><small>مختبر التجويد</small></div><span class="sp"></span><button class="btn sec" id="rf">تحديث ↻</button></div>');
   hd.querySelector('#rf').onclick=function(){load().then(render);};w.appendChild(hd);
-  var tabs=E('div','tabs');[['over','نظرة عامة'],['girls','البنات'],['hw','الواجبات والاختبارات'],['games','الألعاب'],['qs','الأسئلة الصعبة'],['set','الإعدادات']].forEach(function(t){
+  var tabs=E('div','tabs');[['over','نظرة عامة'],['girls','البنات'],['listen','الاستماع'],['hw','الواجبات والاختبارات'],['games','الألعاب'],['qs','الأسئلة الصعبة'],['set','الإعدادات']].forEach(function(t){
     var b=E('button','tab',t[1]);b.setAttribute('aria-selected',TAB===t[0]);b.onclick=function(){TAB=t[0];render();};tabs.appendChild(b);});
   w.appendChild(tabs);
   setTimeout(function(){var sb=tabs.querySelector('[aria-selected="true"]');if(sb)sb.scrollIntoView({inline:'center',block:'nearest'});},0);
-  var V={over:vOver,girls:vGirls,hw:vHw,games:vGames,qs:vQs,set:vSet}[TAB];V(w);
+  var V={over:vOver,girls:vGirls,listen:vListen,hw:vHw,games:vGames,qs:vQs,set:vSet}[TAB];V(w);
 }
 function boot(){app.innerHTML='<div class="login"><p class="muted">جارٍ التحميل…</p></div>';load().then(render).catch(function(){render();});}
 /* ===== نظرة عامة ===== */
@@ -233,6 +233,30 @@ function openHw(a){
     var c=E('div','card');c.appendChild(t);body.appendChild(c);
     var c2=E('div','card');c2.appendChild(E('h2',null,'أكثر الأسئلة خطأً في هذا الواجب'));qList(c2,d.missed);body.appendChild(c2);
     var b=E('button','btn '+(a.active?'warn':'sec'),a.active?'إخفاء الواجب عن البنات':'إظهاره مرة أخرى');b.onclick=function(){rpc('admin_toggle_assignment',{p_token:TOK,p_id:a.id,p_active:!a.active}).then(function(){document.querySelector('.modal').remove();load().then(render);});};body.appendChild(b);
+  });
+}
+/* ===== الاستماع لدروس التليجرام ===== */
+function vListen(w){
+  var LS=DATA.ls||{words:{},counts:[],rows:[]},act=DATA.students.filter(function(s){return s.active;});
+  var c=E('div','card');c.appendChild(E('h2',null,'الاستماع لدروس التليجرام'));
+  c.appendChild(E('p','muted','تؤكِّد الطالبة استماعها في أعلى كل درس، ولا يُفتح لها الدرس التالي قبل ذلك. ويمكنكِ وضع «كلمة سرٍّ» لكل درس تذكرينها في التسجيل، فلا يُقبل التأكيد إلا بها.'));
+  w.appendChild(c);
+  var lv2=!!(DATA.gm&&DATA.gm.level2_open);
+  STN.forEach(function(st,i){
+    if(i>=5&&!lv2)return;
+    var who=LS.rows.filter(function(r){return r.station===st[0];}),ids={};who.forEach(function(r){ids[r.student_id]=1;});
+    var not=act.filter(function(s){return !ids[s.id];}),p=act.length?Math.round(who.length*100/act.length):0;
+    var cd=E('div','card');
+    cd.appendChild(H('<div class="row" style="cursor:default;border:0;padding:0"><div class="ring" style="--p:'+p+';--c:'+colorFor(p)+'">'+ar(p)+'٪</div><div class="nm"><b>'+ar(i+1)+'. '+esc(st[1])+'</b><small>استمعت '+ar(who.length)+' من '+ar(act.length)+'</small></div></div>'));
+    var f=H('<form class="f" style="margin-top:8px"><label>كلمة سرِّ هذا الدرس (اختياري)<div style="display:flex;gap:6px"><input class="in" name="w" placeholder="بدون كلمة سر"><button class="btn sec">حفظ</button></div></label></form>');
+    f.w.value=LS.words[st[0]]||'';
+    f.onsubmit=function(e){e.preventDefault();rpc('admin_set_word',{p_token:TOK,p_station:st[0],p_word:f.w.value}).then(function(r){toast(r.ok?(f.w.value.trim()?'حُفظت كلمة السر':'أُزيلت كلمة السر'):'تعذَّر الحفظ');load();});};
+    cd.appendChild(f);
+    var det=E('details');det.appendChild(E('summary',null,'من استمعت ومن لم تستمع'));
+    var t=H('<table><tr><th>البنت</th><th>الحال</th></tr></table>');
+    who.forEach(function(r){t.appendChild(TR('<tr><td>'+esc(r.name)+'</td><td><span class="pill p-good">استمعت</span> <small class="muted">'+ago(r.created_at)+'</small></td></tr>'));});
+    not.forEach(function(s){t.appendChild(TR('<tr><td>'+esc(s.name)+'</td><td><span class="pill p-bad">لم تستمع</span></td></tr>'));});
+    det.appendChild(t);cd.appendChild(det);w.appendChild(cd);
   });
 }
 /* ===== الألعاب ===== */

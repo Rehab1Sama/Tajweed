@@ -192,6 +192,16 @@ svg.i{width:20px;height:20px;flex:none;vertical-align:middle}
 .hw-item.exam{border-color:#e6c27a}
 .hw-timer{float:left;font-weight:700;color:#a53630;font-family:var(--f-d)}
 .g-opt.picked{background:#fcebc9;border-color:#e3a33b}
+.listen{display:flex;flex-direction:column;gap:8px;margin:6px 0 12px;padding:12px 14px;border-radius:18px;background:#fff7e6;border:1.5px solid #f0d39a}
+.listen .li-q{display:flex;flex-direction:column;line-height:1.55}.listen .li-q b{font-family:var(--f-d);color:#5c3f0c}.listen .li-q span{font-size:.82rem;color:#805716}
+.listen .li-row{display:flex;gap:8px;flex-wrap:wrap}
+.listen .li-in{flex:1;min-width:140px;border:1.5px solid #e6c27a;border-radius:12px;padding:8px 12px;font:inherit;background:#fff}
+.listen .li-btn{border:0;border-radius:12px;padding:9px 16px;background:#16323a;color:#fff;font:700 .92rem var(--f-d);cursor:pointer}
+.listen .li-btn:disabled{opacity:.6}
+.listen.done{flex-direction:row;align-items:center;background:#edf8f0;border-color:#bfe3cc;color:#206c42;font-size:.88rem;padding:8px 12px}
+.listen .li-ok{flex:none;width:24px;height:24px;border-radius:50%;background:#2e8b57;color:#fff;display:grid;place-items:center;font-size:.8rem}
+.ves-lock{opacity:.55}.ves-lock .lk{position:absolute;top:8px;left:10px;z-index:2;width:24px;height:24px;border-radius:50%;background:#5f7176;color:#fff;display:grid;place-items:center}.ves-lock .lk svg{width:14px;height:14px}
+.lab-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;max-width:90vw;background:#16323a;color:#fff;border-radius:14px;padding:10px 16px;font-size:.9rem;box-shadow:0 10px 24px rgba(0,0,0,.3);text-align:center}
 </style>
 </head>
 <body>
@@ -468,6 +478,11 @@ var app=$('#app');
 var META={mabadi:['مب','#3fae86','flask'],maratib:['مر','#e09a2b','beaker'],noon:['نو','#4f8fd8','round'],meem:['مي','#d9668a','tube'],madd:['مد','#8a6fd1','cyl'],
   makharij:['مخ','#2f9fb3','round'],sifat:['صف','#e07a4f','flask'],alaqat:['عل','#5aa65a','beaker'],wasl:['وص','#c4914a','tube'],tafkheem:['تف','#c95b5b','cyl'],waqf:['وق','#5b6fc9','flask']};
 var BY={};LESSONS.forEach(function(l,i){l.n=i+1;BY[l.id]=l;var m=META[l.id];l.sym=m[0];l.c=m[1];l.ves=m[2];});
+function heardList(){try{return JSON.parse(store('lab-listened')||'[]');}catch(e){return [];}}
+function heard(id){return heardList().indexOf(id)>=0;}
+function prevOf(l){var i=LESSONS.indexOf(l);return i>0?LESSONS[i-1]:null;}
+function unlocked(l){var p=prevOf(l);return !p||heard(p.id);}
+function note(t){var d=document.createElement('div');d.className='lab-toast';d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},2600);}
 function level(id){if(stamps()[id])return 1;if(store('lab-first-'+id))return .62;if(store('lab-seen-'+id))return .3;return 0;}
 /* قارورة بسائل يملؤها التقدم */
 function vessel(type,c,f,live){
@@ -528,8 +543,8 @@ function home(){
     }
     app.appendChild(H('div','shelf-h','<b>الرف '+(lv===1?'الأول':'الثاني')+'</b><span>المستوى '+(lv===1?'الأول':'الثاني')+' · '+ar(L.length)+' دروس</span>'));
     var sh=E('div','shelf');
-    L.forEach(function(l){var f=level(l.id);var b=B('ves',null,function(){go(l.id);});b.setAttribute('aria-label',l.title);
-      b.innerHTML=(f===1?'<span class="ok">أتقنتِ</span>':'')+vessel(l.ves,l.c,f,f===1)+elTile(l);sh.appendChild(b);});
+    L.forEach(function(l){var f=level(l.id),op=unlocked(l);var b=B('ves'+(op?'':' ves-lock'),null,function(){if(!op){note('استمعي لدرس «'+prevOf(l).title+'» أولًا، ثم أكِّدي استماعكِ ليُفتح هذا الدرس');return;}go(l.id);});b.setAttribute('aria-label',l.title+(op?'':' (مقفل)'));
+      b.innerHTML=(op?(f===1?'<span class="ok">أتقنتِ</span>':''):'<span class="lk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>')+vessel(l.ves,l.c,f,f===1)+elTile(l);sh.appendChild(b);});
     var cols=window.innerWidth>=600?4:3,fill=(cols-L.length%cols)%cols;for(var k=0;k<fill;k++){var e=E('div','ves');e.style.pointerEvents='none';sh.appendChild(e);}
     app.appendChild(sh);
     if(lv===1){var gk=H('a','games-link','<span class="gl-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.6 15h8.8"/></svg></span><span class="gl-t"><b>ساحة الألعاب</b><span>ثلاث تجارب لكل باب، وألعاب شاملة للمستوى الأول</span></span><span class="gl-a">←</span>');gk.href='ساحة-الألعاب.html';app.appendChild(gk);}
@@ -545,6 +560,7 @@ window.__lv2Open=lv2Open;
 function route(){
   var h=decodeURIComponent(location.hash.slice(1)).split('/');
   if(h[0]&&BY[h[0]]&&BY[h[0]].lvl===2&&!lv2Open()){location.hash='';return;}
+  if(h[0]&&BY[h[0]]&&!unlocked(BY[h[0]])){note('هذا الدرس مقفل حتى تستمعي للدرس الذي قبله');location.hash='';return;}
   if(h[0]&&BY[h[0]])lesson(BY[h[0]],h[1]||'learn');else home();
   window.scrollTo(0,0);
 }
@@ -552,12 +568,39 @@ window.addEventListener('hashchange',route);
 window.__labRefresh=function(){route();};
 $('#brand').addEventListener('click',function(){go('');});
 
+/* ===== تأكيد الاستماع لدرس التليجرام ===== */
+function listenBox(l){
+  var box=E('div','listen');
+  function paint(){
+    box.innerHTML='';
+    if(heard(l.id)){box.className='listen done';box.innerHTML='<span class="li-ok">✓</span><span>استمعتِ لدرس التليجرام'+(LESSONS.indexOf(l)<LESSONS.length-1?'، وفُتح الدرس التالي':'')+'</span>';return;}
+    box.className='listen';
+    var needW=false;try{needW=JSON.parse(store('lab-wordfor')||'[]').indexOf(l.id)>=0;}catch(e){}
+    box.appendChild(H('div','li-q','<b>هل استمعتِ لدرس هذا الباب على التليجرام؟</b><span>'+(needW?'اكتبي كلمة السرِّ التي ذكرتها المعلمة في التسجيل.':'أكِّدي استماعكِ ليُفتح الدرس التالي.')+'</span>'));
+    var row=E('div','li-row'),inp=null;
+    if(needW){inp=E('input','li-in');inp.placeholder='كلمة سرِّ الدرس';inp.autocomplete='off';row.appendChild(inp);}
+    var btn=B('li-btn','نعم، استمعتُ للدرس',function(){
+      if(needW&&!inp.value.trim()){note('اكتبي كلمة السرِّ أولًا');inp.focus();return;}
+      if(!window.__labListen){note('تعذَّر الاتصال');return;}
+      btn.disabled=true;btn.textContent='لحظة…';
+      window.__labListen(l.id,inp?inp.value:null).then(function(r){
+        if(r&&r.ok){var L=heardList();if(L.indexOf(l.id)<0)L.push(l.id);store('lab-listened',JSON.stringify(L));paint();note('أحسنتِ! فُتح الدرس التالي');}
+        else if(r&&r.error==='WORD'){note('كلمة السرِّ غير صحيحة، استمعي للدرس مرة أخرى');}
+        else note('تعذَّر الحفظ، حاولي مرة أخرى');
+      }).catch(function(x){if(!/LOGIN/.test(x&&x.message))note('تعذَّر الاتصال، تأكَّدي من الإنترنت');})
+      .then(function(){if(!heard(l.id)){btn.disabled=false;btn.textContent='نعم، استمعتُ للدرس';}});
+    });
+    row.appendChild(btn);box.appendChild(row);
+  }
+  paint();return box;
+}
 /* ===== صفحة الدرس ===== */
 function lesson(l,tab){
   app.innerHTML='';
   store('lab-seen-'+l.id,'1');
   var hd=E('div','lh');hd.appendChild(B('back','›',function(){go('');}));hd.insertAdjacentHTML('beforeend',elTile(l));
   var t=E('div');t.appendChild(E('small',null,'المستوى '+(l.lvl===1?'الأول':'الثاني')+' · الدرس '+ar(l.n)));t.appendChild(E('h1',null,l.title));hd.appendChild(t);app.appendChild(hd);
+  app.appendChild(listenBox(l));
   var CHG={mabadi:1,maratib:2,noon:3,meem:4,madd:5};if(CHG[l.id]){var lg=H('a','games-mini','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg> ألعاب هذا الباب');lg.href='ساحة-الألعاب.html#ch'+CHG[l.id];app.appendChild(lg);}
   var T=[['learn','دفتر الشرح',UI.note],['lab','منضدة التجربة',UI.bench]];if(l.micro)T.push(['micro','المجهر',UI.scope]);T.push(['quiz','تقرير الاختبار',UI.report]);
   var tabs=E('div','tabs'+(T.length===3?' t3':''));T.forEach(function(x){var b=B('tab',null,function(){go(l.id,x[0]);});b.innerHTML=x[2]+'<span>'+x[1]+'</span>';b.setAttribute('aria-selected',x[0]===tab?'true':'false');tabs.appendChild(b);});
@@ -952,7 +995,7 @@ route();
   var ov=document.getElementById('clLogin'),form=document.getElementById('clForm'),err=document.getElementById('clErr'),go=document.getElementById('clGo');
   ov.addEventListener('click',function(e){if(e.target===ov&&!REQUIRE_LOGIN)ov.hidden=true;});
   function showLogin(){ov.hidden=false;setTimeout(function(){document.getElementById('clName').focus();},50);}
-  function logout(){['lab-token','lab-name',SK,'lab-queue'].forEach(function(k){ls(k,null);});Object.keys(localStorage).forEach(function(k){if(k.indexOf('lab-first-')===0)ls(k,null);});location.hash='';location.reload();}
+  function logout(){['lab-token','lab-name',SK,'lab-queue','lab-listened','lab-wordfor'].forEach(function(k){ls(k,null);});Object.keys(localStorage).forEach(function(k){if(k.indexOf('lab-first-')===0)ls(k,null);});location.hash='';location.reload();}
   form.addEventListener('submit',function(e){
     e.preventDefault();err.textContent='';go.disabled=true;go.textContent='لحظة…';
     rpc('student_login',{p_name:document.getElementById('clName').value,p_pin:document.getElementById('clPin').value}).then(function(r){
@@ -981,6 +1024,7 @@ route();
   }
   setInterval(flush,15000);window.addEventListener('online',flush);
   function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+  window.__labListen=function(station,word){if(!tok){showLogin();err.textContent='سجِّلي الدخول ليُحسب استماعكِ للدرس';return Promise.reject(new Error('LOGIN'));}return rpc('mark_listened',{p_token:tok,p_station:station,p_word:word||null});};
   window.__labLog=function(d){if(!tok)return;push({t:'a',id:uid(),d:d});};
   window.__labGate=function(s,r,n){if(!tok)return;push({t:'g',id:uid(),d:{s:s,r:r,n:n}});};
   /* ===== المزامنة ===== */
@@ -988,7 +1032,7 @@ route();
   function sync(){
     if(!tok)return;
     rpc('student_state',{p_token:tok}).then(function(st){
-      state=st;var stamps={};(st.progress||[]).forEach(function(p){if(p.stamped)stamps[p.station]=true;});
+      state=st;ls('lab-listened',JSON.stringify(st.listened||[]));ls('lab-wordfor',JSON.stringify(st.word_for||[]));if(st.level2_open!=null)ls('lab-lv2',st.level2_open?'1':'0');var stamps={};(st.progress||[]).forEach(function(p){if(p.stamped)stamps[p.station]=true;});
       var loc={};try{loc=JSON.parse(ls(SK)||'{}');}catch(e){}
       Object.keys(loc).forEach(function(k){if(loc[k])stamps[k]=true;});
       ls(SK,JSON.stringify(stamps));
