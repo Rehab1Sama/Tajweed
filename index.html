@@ -204,6 +204,10 @@ svg.i{width:20px;height:20px;flex:none;vertical-align:middle}
 .lab-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;max-width:90vw;background:#16323a;color:#fff;border-radius:14px;padding:10px 16px;font-size:.9rem;box-shadow:0 10px 24px rgba(0,0,0,.3);text-align:center}
 html.locked-out #app,html.locked-out .cl-chip{display:none!important}
 html.locked-out .ov#clLogin{background:linear-gradient(180deg,#eef3f2,#dfe9e8)}
+.lg-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#eef3f2;border-radius:999px;padding:4px;margin:4px 0 8px}
+.lg-tabs button{border:0;background:none;border-radius:999px;padding:7px;font:700 .9rem var(--f-d);color:var(--muted);cursor:pointer}
+.lg-tabs button.on{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(22,50,58,.12)}
+.lg-hint{color:var(--muted);margin:0 0 8px;font-size:.88rem}
 </style>
 <script>try{if(!localStorage.getItem('lab-token'))document.documentElement.classList.add('locked-out');}catch(e){}</script>
 </head>
@@ -215,9 +219,13 @@ html.locked-out .ov#clLogin{background:linear-gradient(180deg,#eef3f2,#dfe9e8)}
   <form class="login" id="clForm" autocomplete="off">
     <svg viewBox="0 0 24 24" style="width:48px;height:48px"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" fill="none" stroke="#16323a" stroke-width="1.6" stroke-linejoin="round"/><path d="M7.5 15h9l1.6 3a1.3 1.3 0 0 1-1.2 2H7.1a1.3 1.3 0 0 1-1.2-2z" fill="#3fae86"/></svg>
     <h2>مرحبًا بكِ في مختبر التجويد</h2>
-    <p style="color:var(--muted);margin:0 0 8px;font-size:.9rem">المختبر خاص بطالبات مقرأة سنا الآي. ادخلي باسمكِ والرمز الذي أعطتكِ إياه معلمتكِ.</p>
+    <div class="lg-tabs" id="clTabs"><button type="button" class="on" data-m="in">لديَّ حساب</button><button type="button" data-m="up">حساب جديد</button></div>
+    <p class="lg-hint" id="clHint">المختبر خاص بطالبات مقرأة سنا الآي. ادخلي باسمكِ ورمزكِ.</p>
     <input id="clName" placeholder="اسمكِ" required>
     <input id="clPin" placeholder="الرمز" inputmode="numeric" type="password" required>
+    <input id="clPin2" placeholder="أعيدي كتابة الرمز" inputmode="numeric" type="password" hidden>
+    <input id="clCircle" placeholder="اسم حلقتكِ (اختياري)" hidden>
+    <input id="clCode" placeholder="رمز الانضمام من معلمتكِ" hidden>
     <div class="err" id="clErr"></div>
     <button class="btn am" id="clGo" style="width:100%">ادخلي ‹</button>
   </form>
@@ -999,15 +1007,28 @@ route();
   ov.addEventListener('click',function(e){if(e.target===ov&&!REQUIRE_LOGIN)ov.hidden=true;});
   function showLogin(){ov.hidden=false;setTimeout(function(){document.getElementById('clName').focus();},50);}
   function logout(){['lab-token','lab-name',SK,'lab-queue','lab-listened','lab-wordfor'].forEach(function(k){ls(k,null);});Object.keys(localStorage).forEach(function(k){if(k.indexOf('lab-first-')===0)ls(k,null);});location.hash='';location.reload();}
+  var mode='in',F=function(id){return document.getElementById(id);};
+  function setMode(m){mode=m;[].forEach.call(F('clTabs').children,function(b){b.classList.toggle('on',b.getAttribute('data-m')===m);});
+    var up=m==='up';['clPin2','clCircle','clCode'].forEach(function(id){F(id).hidden=!up;F(id).required=up&&id!=='clCircle';});
+    F('clName').placeholder=up?'اسمكِ الثلاثي':'اسمكِ';F('clPin').placeholder=up?'اختاري رمزًا من ٤ أرقام أو أكثر':'الرمز';
+    F('clHint').textContent=up?'أنشئي حسابكِ بنفسكِ، واحفظي اسمكِ ورمزكِ لتدخلي بهما كل مرة. رمز الانضمام تجدينه عند معلمتكِ.':'المختبر خاص بطالبات مقرأة سنا الآي. ادخلي باسمكِ ورمزكِ.';
+    go.textContent=up?'أنشئي حسابي ‹':'ادخلي ‹';err.textContent='';}
+  [].forEach.call(F('clTabs').children,function(b){b.addEventListener('click',function(){setMode(b.getAttribute('data-m'));});});
+  function done(r){tok=r.token;me=r.name;ls('lab-token',tok);ls('lab-name',me);ls(SK,'{}');
+    document.documentElement.classList.remove('locked-out');ov.hidden=true;setMe();sync();if(window.__labRefresh)window.__labRefresh();}
+  var ERR={CODE:'رمز الانضمام غير صحيح، اطلبيه من معلمتكِ',DUP:'هذا الاسم مسجَّل من قبل. إن كان حسابكِ فادخلي من «لديَّ حساب»، وإلا فأضيفي اسم العائلة',PIN:'الرمز يكون من ٤ إلى ٨ أرقام',NAME:'اكتبي اسمكِ الثلاثي',CLOSED:'التسجيل مغلق الآن، تواصلي مع معلمتكِ'};
   form.addEventListener('submit',function(e){
-    e.preventDefault();err.textContent='';go.disabled=true;go.textContent='لحظة…';
-    rpc('student_login',{p_name:document.getElementById('clName').value,p_pin:document.getElementById('clPin').value}).then(function(r){
-      if(!r.ok){err.textContent='الاسم أو الرمز غير صحيح';return;}
-      tok=r.token;me=r.name;ls('lab-token',tok);ls('lab-name',me);ls(SK,'{}');
-      document.documentElement.classList.remove('locked-out');ov.hidden=true;setMe();sync();if(window.__labRefresh)window.__labRefresh();
-    }).catch(function(x){err.textContent=/LOCKED/.test(x.message)?'محاولات كثيرة، انتظري ربع ساعة ثم حاولي':'تعذَّر الاتصال، تأكدي من الإنترنت';})
-    .then(function(){go.disabled=false;go.textContent='ادخلي ‹';});
+    e.preventDefault();err.textContent='';
+    var up=mode==='up',name=F('clName').value.trim(),pin=F('clPin').value.trim();
+    if(up){if(!/^[0-9\u0660-\u0669]{4,8}$/.test(pin)){err.textContent=ERR.PIN;return;}if(pin!==F('clPin2').value.trim()){err.textContent='الرمزان غير متطابقين';return;}}
+    pin=pin.replace(/[\u0660-\u0669]/g,function(d){return String(d.charCodeAt(0)-0x660);});
+    go.disabled=true;var lbl=go.textContent;go.textContent='لحظة…';
+    var call=up?rpc('student_register',{p_name:name,p_pin:pin,p_circle:F('clCircle').value,p_code:F('clCode').value}):rpc('student_login',{p_name:name,p_pin:pin});
+    call.then(function(r){if(!r.ok){err.textContent=up?(ERR[r.error]||'تعذَّر إنشاء الحساب'):'الاسم أو الرمز غير صحيح';return;}done(r);})
+    .catch(function(x){err.textContent=/LOCKED/.test(x.message)?'محاولات كثيرة، انتظري ربع ساعة ثم حاولي':'تعذَّر الاتصال، تأكدي من الإنترنت';})
+    .then(function(){go.disabled=false;go.textContent=lbl;});
   });
+  rpc('public_settings',{}).then(function(st){if(st&&st.join_open===false){F('clTabs').hidden=true;}}).catch(function(){});
   /* ===== طابور الإرسال (يعمل بلا إنترنت) ===== */
   function queue(){try{return JSON.parse(ls('lab-queue')||'[]');}catch(e){return [];}}
   function setQ(q){ls('lab-queue',JSON.stringify(q.slice(-500)));}

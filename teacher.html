@@ -102,7 +102,7 @@ function level(s){
 }
 function colorFor(p){return p==null?'#ccc':p>=85?'#2F8F63':p>=60?'#D9A441':'#C0405E';}
 function logout(){localStorage.removeItem('lab-admin');TOK=null;render();}
-function load(){return Promise.all([rpc('admin_overview',{p_token:TOK}),rpc('admin_games',{p_token:TOK}).catch(function(){return {games:[],rows:[],level2_open:false};}),rpc('admin_listen',{p_token:TOK}).catch(function(){return {words:{},counts:[],rows:[]};})]).then(function(r){DATA=r[0];DATA.gm=r[1];DATA.ls=r[2];}).catch(function(e){if(/ADMIN/.test(e.message)){logout();throw e;}throw e;});}
+function load(){return Promise.all([rpc('admin_overview',{p_token:TOK}),rpc('admin_games',{p_token:TOK}).catch(function(){return {games:[],rows:[],level2_open:false};}),rpc('admin_listen',{p_token:TOK}).catch(function(){return {words:{},counts:[],rows:[]};}),rpc('admin_join',{p_token:TOK}).catch(function(){return {open:false,code:''};})]).then(function(r){DATA=r[0];DATA.gm=r[1];DATA.ls=r[2];DATA.jn=r[3];}).catch(function(e){if(/ADMIN/.test(e.message)){logout();throw e;}throw e;});}
 function render(){
   app.innerHTML='';
   if(!TOK){
@@ -288,7 +288,19 @@ function vSet(w){
   cl.appendChild(E('p','muted',open?'دروس المستوى الثاني مفتوحة للبنات الآن.':'دروس المستوى الثاني مغلقة: تظهر للبنات خزانةً مقفلة ولا يستطعن فتحها.'));
   var tl=E('button','btn '+(open?'warn':'gold'),open?'إغلاق المستوى الثاني':'فتح المستوى الثاني للبنات');
   tl.onclick=function(){if(!confirm(open?'إغلاق دروس المستوى الثاني عن البنات؟':'فتح دروس المستوى الثاني لكل البنات؟'))return;rpc('admin_set_setting',{p_token:TOK,p_key:'level2_open',p_value:!open}).then(function(r){toast(r.ok?(open?'أُغلق المستوى الثاني':'فُتح المستوى الثاني'):'تعذَّر الحفظ');load().then(render);});};
-  cl.appendChild(tl);w.appendChild(cl);
+  cl.appendChild(tl);
+  var J=DATA.jn||{open:false,code:''};
+  var cj=E('div','card');cj.appendChild(E('h2',null,'تسجيل البنات بأنفسهن'));
+  cj.appendChild(E('p','muted',J.open?'التسجيل مفتوح: تنشئ البنت حسابها بنفسها باسمها الثلاثي ورمز تختاره، بشرط أن تكتب «رمز الانضمام». أرسلي لهن رابط المختبر ورمز الانضمام في المجموعة.':'التسجيل مغلق: لا تستطيع البنات إنشاء حسابات جديدة، ويدخل من لها حساب فقط.'));
+  var fj=H('<form class="f"><label>رمز الانضمام<div style="display:flex;gap:6px"><input class="in" name="c" required><button class="btn sec">حفظ</button></div></label></form>');
+  fj.c.value=J.code||'';
+  fj.onsubmit=function(e){e.preventDefault();rpc('admin_set_setting',{p_token:TOK,p_key:'join_code',p_value:fj.c.value.trim()}).then(function(r){toast(r.ok?'حُفظ رمز الانضمام':'تعذَّر الحفظ');load().then(render);});};
+  cj.appendChild(fj);
+  var tj2=E('button','btn '+(J.open?'warn':'gold'),J.open?'إغلاق التسجيل':'فتح التسجيل');tj2.style.marginTop='8px';
+  tj2.onclick=function(){rpc('admin_set_setting',{p_token:TOK,p_key:'join_open',p_value:!J.open}).then(function(r){toast(r.ok?(J.open?'أُغلق التسجيل':'فُتح التسجيل'):'تعذَّر الحفظ');load().then(render);});};
+  cj.appendChild(tj2);
+  cj.appendChild(E('p','muted','إن نسيت بنتٌ رمزها، افتحي اسمها من تبويب «البنات» واكتبي لها رمزًا جديدًا. ويمكنكِ إيقاف أي حساب لا تعرفينه من هناك أيضًا.'));
+  w.appendChild(cl);w.appendChild(cj);
   var c2=E('div','card');c2.appendChild(E('h2',null,'تغيير رمز المعلمة'));
   var f=H('<form class="f"><input class="in" type="password" inputmode="numeric" placeholder="الرمز الجديد (٦ أرقام على الأقل)" required minlength="6"><button class="btn">حفظ</button></form>');
   f.onsubmit=function(e){e.preventDefault();rpc('admin_change_pin',{p_token:TOK,p_pin:f.querySelector('input').value}).then(function(r){toast(r.ok?'تم تغيير الرمز':'الرمز قصير');});};c2.appendChild(f);w.appendChild(c2);
