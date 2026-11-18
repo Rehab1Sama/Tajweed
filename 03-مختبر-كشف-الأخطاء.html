@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f3b46">
 <title>مختبر كشف الأخطاء | مختبر التجويد</title>
-<script>try{if(!localStorage.getItem('lab-token'))location.replace('index.html');}catch(e){location.replace('index.html');}</script>
+<script>(function(){var O=['mabadi','maratib','noon','meem','madd','makharij','sifat','alaqat','wasl','tafkheem','waqf'],g='all',ok=false;try{var L=localStorage,t=L.getItem('lab-token');if(t){if(g==='all'){var st=JSON.parse(L.getItem('lab-stamps')||'{}'),n=L.getItem('lab-lv2')==='1'?O.length:5;ok=O.slice(0,n).every(function(i){return st[i]})}else{var i=O.indexOf(g),h=JSON.parse(L.getItem('lab-listened')||'[]');ok=i<=0||h.indexOf(O[i-1])>=0}}}catch(e){}if(!ok)location.replace('index.html'+(g==='all'?'':'#'+g));})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Amiri+Quran&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{

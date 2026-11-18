@@ -208,6 +208,13 @@ html.locked-out .ov#clLogin{background:linear-gradient(180deg,#eef3f2,#dfe9e8)}
 .lg-tabs button{border:0;background:none;border-radius:999px;padding:7px;font:700 .9rem var(--f-d);color:var(--muted);cursor:pointer}
 .lg-tabs button.on{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(22,50,58,.12)}
 .lg-hint{color:var(--muted);margin:0 0 8px;font-size:.88rem}
+.games-link.gl-lock{width:100%;border:0;font:inherit;text-align:start;cursor:pointer;background:linear-gradient(135deg,#5f7176,#3f5157);opacity:.92}
+.games-link.gl-lock .gl-i{background:#9fb0b5;color:#fff}
+.lgames{margin:0 0 12px;padding:10px 12px;border-radius:18px;background:#0f3b46;color:#e8f3f5}
+.lgames>b{display:block;font:700 .9rem var(--f-d);margin-bottom:8px;color:#ffd88c}
+.lg-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.lg-card{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;text-decoration:none;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 4px;font-size:.78rem;line-height:1.4}
+.lg-card svg{width:22px;height:22px;color:#ffd88c}
 </style>
 <script>try{if(!localStorage.getItem('lab-token'))document.documentElement.classList.add('locked-out');}catch(e){}</script>
 </head>
@@ -558,7 +565,10 @@ function home(){
       b.innerHTML=(op?(f===1?'<span class="ok">أتقنتِ</span>':''):'<span class="lk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>')+vessel(l.ves,l.c,f,f===1)+elTile(l);sh.appendChild(b);});
     var cols=window.innerWidth>=600?4:3,fill=(cols-L.length%cols)%cols;for(var k=0;k<fill;k++){var e=E('div','ves');e.style.pointerEvents='none';sh.appendChild(e);}
     app.appendChild(sh);
-    if(lv===1){var gk=H('a','games-link','<span class="gl-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.6 15h8.8"/></svg></span><span class="gl-t"><b>ساحة الألعاب</b><span>ثلاث تجارب لكل باب، وألعاب شاملة للمستوى الأول</span></span><span class="gl-a">←</span>');gk.href='ساحة-الألعاب.html';app.appendChild(gk);}
+    if(lv===1){var need=LESSONS.filter(function(x){return x.lvl===1||lv2Open();}),got=need.filter(function(x){return S[x.id];}).length,gOpen=got===need.length;
+      var gk=H(gOpen?'a':'button','games-link'+(gOpen?'':' gl-lock'),'<span class="gl-i">'+(gOpen?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.6 15h8.8"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>')+'</span><span class="gl-t"><b>ساحة الألعاب الشاملة</b><span>'+(gOpen?'ألعاب تجمع أحكام الدروس كلها':'تُفتح بعد إتقان الدروس كلها · أتقنتِ '+ar(got)+' من '+ar(need.length))+'</span></span><span class="gl-a">'+(gOpen?'←':'')+'</span>');
+      if(gOpen)gk.href='ساحة-الألعاب.html';else{gk.type='button';gk.onclick=function(){note('أتقني الدروس كلها (اجتازي تقرير الاختبار في كل درس) لتُفتح ساحة الألعاب');};}
+      app.appendChild(gk);}
   });
   app.appendChild(H('div','legend2','<span><i style="background:#fff"></i>لم تبدئي</span><span><i style="background:linear-gradient(0deg,#9fb0b5 30%,#fff 30%)"></i>قرأتِ الشرح</span><span><i style="background:linear-gradient(0deg,#9fb0b5 62%,#fff 62%)"></i>جرَّبتِ الاختبار</span><span><i style="background:#3fae86"></i>أتقنتِ</span>'));
   app.appendChild(E('p','footer','رواية حفص عن عاصم من طريق الشاطبية'));
@@ -612,7 +622,14 @@ function lesson(l,tab){
   var hd=E('div','lh');hd.appendChild(B('back','›',function(){go('');}));hd.insertAdjacentHTML('beforeend',elTile(l));
   var t=E('div');t.appendChild(E('small',null,'المستوى '+(l.lvl===1?'الأول':'الثاني')+' · الدرس '+ar(l.n)));t.appendChild(E('h1',null,l.title));hd.appendChild(t);app.appendChild(hd);
   app.appendChild(listenBox(l));
-  var CHG={mabadi:1,maratib:2,noon:3,meem:4,madd:5};if(CHG[l.id]){var lg=H('a','games-mini','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg> ألعاب هذا الباب');lg.href='ساحة-الألعاب.html#ch'+CHG[l.id];app.appendChild(lg);}
+  var LG={mabadi:[['1-1-خزانة-المبادئ','خزانة المبادئ العشرة'],['1-2-حق-الحرف-ومستحقه','حقُّ الحرف ومستحقُّه'],['1-3-سلسلة-التعريف','سلسلة التعريف']],
+    maratib:[['2-1-عداد-السرعة','عدَّاد السرعة'],['2-2-أطباق-العينات','أطباق العيِّنات'],['2-3-جهاز-الطرد','جهاز الطرد المركزي']],
+    noon:[['3-1-الجدول-الدوري','الجدول الدوري للنون'],['3-2-معادلة-التفاعل','معادلة التفاعل'],['3-3-مؤقت-التفاعل','مؤقِّت التفاعل']],
+    meem:[['4-1-لوحة-التحويل','لوحة التحويل'],['4-2-عداد-الجسيمات','عدَّاد الجسيمات'],['4-3-أكملي-التفاعل','أكملي التفاعل']],
+    madd:[['5-1-ميزان-القوة','ميزان القوة'],['5-2-نابض-الحركات','نابض الحركات'],['5-3-فرز-المدود','فرز المدود']]};
+  if(LG[l.id]){var lgs=E('div','lgames');lgs.appendChild(E('b',null,'ألعاب هذا الدرس'));var lr=E('div','lg-row');
+    LG[l.id].forEach(function(g){var a=H('a','lg-card','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.6 15h8.8"/></svg><span>'+g[1]+'</span>');a.href=g[0]+'.html';lr.appendChild(a);});
+    lgs.appendChild(lr);app.appendChild(lgs);}
   var T=[['learn','دفتر الشرح',UI.note],['lab','منضدة التجربة',UI.bench]];if(l.micro)T.push(['micro','المجهر',UI.scope]);T.push(['quiz','تقرير الاختبار',UI.report]);
   var tabs=E('div','tabs'+(T.length===3?' t3':''));T.forEach(function(x){var b=B('tab',null,function(){go(l.id,x[0]);});b.innerHTML=x[2]+'<span>'+x[1]+'</span>';b.setAttribute('aria-selected',x[0]===tab?'true':'false');tabs.appendChild(b);});
   app.appendChild(tabs);
