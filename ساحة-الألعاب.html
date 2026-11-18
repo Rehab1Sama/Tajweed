@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f3b46">
 <title>ساحة الألعاب | مختبر التجويد</title>
+<script>try{if(!localStorage.getItem('lab-token'))location.replace('index.html');}catch(e){location.replace('index.html');}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Amiri+Quran&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -69,6 +70,7 @@ button{font:inherit;cursor:pointer;-webkit-user-select:none;user-select:none}
 .shake{animation:shake .38s}
 @keyframes shake{25%{transform:translateX(6px)}75%{transform:translateX(-6px)}}
 .end{text-align:center}
+.sent{font-size:.82rem;color:#9fd8c4;margin:0 0 14px}.sent a{color:#ffd88c}
 .stars{font-size:2.6rem;letter-spacing:.2em;color:rgba(255,255,255,.2);margin-top:6px}
 .stars .on{color:#f0b550;text-shadow:0 0 18px rgba(240,181,80,.6)}
 .big{font:700 3rem var(--f-d);color:#fff;line-height:1.1}

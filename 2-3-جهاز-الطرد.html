@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f3b46">
 <title>جهاز الطرد المركزي | مختبر التجويد</title>
+<script>try{if(!localStorage.getItem('lab-token'))location.replace('index.html');}catch(e){location.replace('index.html');}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Amiri+Quran&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -256,7 +257,7 @@ var CLOUD='https://ostldlkpvxbjyhcvpuue.supabase.co',CKEY='eyJhbGciOiJIUzI1NiIsI
 function report(game,score,max){
   var tok=null,el=$('#sent');try{tok=localStorage.getItem('lab-token')}catch(e){}
   if(!el)return;
-  if(!tok){el.innerHTML='لم تُرسَل النتيجة لمعلمتكِ لأنكِ لم تسجِّلي الدخول. <a href="index.html">سجِّلي الدخول في المختبر</a> ثم العبي مرة أخرى.';return}
+  if(!tok){el.textContent='لم تُرسَل النتيجة: سجِّلي الدخول في المختبر.';return}
   el.textContent='جارٍ إرسال نتيجتكِ إلى معلمتكِ…';
   fetch(CLOUD+'/rest/v1/rpc/tj_save_game',{method:'POST',headers:{apikey:CKEY,Authorization:'Bearer '+CKEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:tok,p_game:game,p_score:score,p_max:max})})
     .then(function(r){el.textContent=r.ok?'وصلت نتيجتكِ إلى معلمتكِ.':'تعذَّر إرسال النتيجة، حاولي لاحقًا.'})
