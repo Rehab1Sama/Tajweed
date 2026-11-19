@@ -223,7 +223,8 @@ html.locked-out .ov#clLogin{background:linear-gradient(180deg,#eef3f2,#dfe9e8)}
 .cl-chip.inst{background:#16323a;color:#ffd88c;border-color:#16323a}
 .tmode{display:flex;align-items:center;gap:8px;margin:6px 0 12px;padding:9px 12px;border-radius:14px;background:#e9f6fb;border:1px solid #cfe9f3;color:#2a4d57;font-size:.85rem}
 .ios-tip{position:fixed;inset:auto 12px 16px 12px;z-index:98;background:#fff;color:var(--ink);border-radius:18px;padding:14px;box-shadow:0 14px 34px rgba(0,0,0,.3);font-size:.9rem;line-height:1.8}
-.ios-tip b{font-family:var(--f-d)}.ios-tip button{margin-top:6px;border:0;background:#16323a;color:#fff;border-radius:10px;padding:6px 14px;font:inherit}
+.ios-tip b{font-family:var(--f-d)}
+.apk-btn{display:inline-block;margin:8px 0 2px;background:#e3a33b;color:#3a2a07;border-radius:12px;padding:8px 18px;font-weight:700;text-decoration:none}.ios-tip button{margin-top:6px;border:0;background:#16323a;color:#fff;border-radius:10px;padding:6px 14px;font:inherit}
 </style>
 <script>window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;window.dispatchEvent(new Event('lab-installable'));});</script>
 <script>try{if(localStorage.getItem('lab-admin')&&!localStorage.getItem('lab-token'))document.documentElement.classList.add('teacher');else if(!localStorage.getItem('lab-token'))document.documentElement.classList.add('locked-out');}catch(e){}</script>
@@ -1163,7 +1164,7 @@ route();
   if(TEACH){hwB.hidden=true;meB.textContent='المعلمة';}
   else if(!tok){setMe();if(REQUIRE_LOGIN)showLogin();}else{setMe();sync();flush();}
   /* ===== تثبيت التطبيق ===== */
-  var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+  var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone||/TajweedLabApp/.test(navigator.userAgent);
   if(!standalone){
     var inst=E('button','cl-chip inst','تثبيت');inst.setAttribute('aria-label','تثبيت التطبيق');inst.type='button';inst.hidden=true;bar.insertBefore(inst,bar.children[1]||null);
     inst.hidden=false;
@@ -1173,7 +1174,7 @@ route();
       if(dp){dp.prompt();dp.userChoice.then(function(r){if(r&&r.outcome==='accepted'){window.__bip=null;inst.hidden=true;}}).catch(function(){});return;}
       var t=E('div','ios-tip');
       t.innerHTML=ios?'<b>لتثبيت التطبيق على الآيفون:</b><br>١. افتحي الموقع من متصفح سفاري.<br>٢. اضغطي زرَّ المشاركة (المربع الذي فيه سهم للأعلى) أسفل الشاشة.<br>٣. اختاري «إضافة إلى الشاشة الرئيسية».'
-        :'<b>لتثبيت التطبيق على جوالكِ:</b><br>١. افتحي الموقع من متصفح قوقل كروم.<br>٢. اضغطي النقاط الثلاث ⋮ أعلى الشاشة.<br>٣. اختاري «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».<br><small>إن لم يظهر الخيار، أغلقي الصفحة وافتحيها مرة ثانية بعد دقيقة.</small>';
+        :'<b>تطبيق مختبر التجويد للأندرويد</b><br>١. اضغطي «تحميل التطبيق» بالأسفل.<br>٢. افتحي الملف بعد تحميله واضغطي «تثبيت».<br><small>إن طلب الجوال السماح بتثبيت التطبيقات من هذا المصدر، فاسمحي له ثم ارجعي.</small><br><a class="apk-btn" href="https://github.com/Rehab1Sama/Tajweed/releases/latest/download/tajweed-lab.apk">تحميل التطبيق</a>';
       var x=E('button',null,'حسنًا');x.onclick=function(){t.remove();};t.appendChild(x);document.body.appendChild(t);
     });
     window.addEventListener('appinstalled',function(){inst.hidden=true;});
