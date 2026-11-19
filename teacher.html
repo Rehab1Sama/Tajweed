@@ -69,7 +69,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:start}th{color:var(--muted);font-weight:600}
 .spark{display:flex;align-items:flex-end;gap:2px;height:40px}.spark i{flex:1;background:var(--lav);border-radius:2px 2px 0 0;min-height:2px}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;color:var(--muted);margin-top:6px}
-</style></head><body>
+</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f3b46"></head><body>
 <div id="app"></div>
 <script>
 var STN=[["mabadi","التجويد ومبادئه"],["maratib","مراتب القراءة واللحون"],["noon","النون الساكنة والتنوين"],["meem","الميم الساكنة"],["madd","المدود"],["makharij","مخارج الحروف"],["sifat","صفات الحروف"],["alaqat","علاقات الحروف"],["wasl","همزة الوصل"],["tafkheem","التفخيم والترقيق"],["waqf","الوقف على أواخر الكلم"]];
@@ -113,7 +113,7 @@ function render(){
     app.appendChild(L);return;
   }
   var w=E('div','wrap');app.appendChild(w);
-  var hd=H('<div class="hd"><span class="logo"></span><div><h1>لوحة المعلمة</h1><small>مختبر التجويد</small></div><span class="sp"></span><button class="btn sec" id="rf">تحديث ↻</button></div>');
+  var hd=H('<div class="hd"><span class="logo"></span><div><h1>لوحة المعلمة</h1><small>مختبر التجويد</small></div><span class="sp"></span><a class="btn gold" href="index.html" style="text-decoration:none">الدروس والألعاب</a><button class="btn sec" id="rf">↻</button></div>');
   hd.querySelector('#rf').onclick=function(){load().then(render);};w.appendChild(hd);
   var tabs=E('div','tabs');[['over','نظرة عامة'],['girls','البنات'],['listen','الاستماع'],['hw','الواجبات والاختبارات'],['games','الألعاب'],['qs','الأسئلة الصعبة'],['set','الإعدادات']].forEach(function(t){
     var b=E('button','tab',t[1]);b.setAttribute('aria-selected',TAB===t[0]);b.onclick=function(){TAB=t[0];render();};tabs.appendChild(b);});
@@ -307,4 +307,4 @@ function vSet(w){
   var c3=E('div','card');var lo=E('button','btn warn','تسجيل الخروج');lo.onclick=logout;c3.appendChild(lo);w.appendChild(c3);
 }
 if(TOK)boot();else render();
-</script></body></html>
+</script><script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script></body></html>

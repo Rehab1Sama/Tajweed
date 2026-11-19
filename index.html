@@ -215,8 +215,14 @@ html.locked-out .ov#clLogin{background:linear-gradient(180deg,#eef3f2,#dfe9e8)}
 .lg-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .lg-card{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;text-decoration:none;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 4px;font-size:.78rem;line-height:1.4}
 .lg-card svg{width:22px;height:22px;color:#ffd88c}
+.lg-teacher{display:block;margin-top:12px;font-size:.82rem;color:var(--muted);text-decoration:underline}
+.cl-chip[hidden]{display:none!important}
+.cl-chip.inst{background:#16323a;color:#ffd88c;border-color:#16323a}
+.tmode{display:flex;align-items:center;gap:8px;margin:6px 0 12px;padding:9px 12px;border-radius:14px;background:#e9f6fb;border:1px solid #cfe9f3;color:#2a4d57;font-size:.85rem}
+.ios-tip{position:fixed;inset:auto 12px 16px 12px;z-index:98;background:#fff;color:var(--ink);border-radius:18px;padding:14px;box-shadow:0 14px 34px rgba(0,0,0,.3);font-size:.9rem;line-height:1.8}
+.ios-tip b{font-family:var(--f-d)}.ios-tip button{margin-top:6px;border:0;background:#16323a;color:#fff;border-radius:10px;padding:6px 14px;font:inherit}
 </style>
-<script>try{if(!localStorage.getItem('lab-token'))document.documentElement.classList.add('locked-out');}catch(e){}</script>
+<script>try{if(localStorage.getItem('lab-admin')&&!localStorage.getItem('lab-token'))document.documentElement.classList.add('teacher');else if(!localStorage.getItem('lab-token'))document.documentElement.classList.add('locked-out');}catch(e){}</script>
 </head>
 <body>
 <div class="cl-bar" id="bar"><span class="brand" id="brand"><svg class="i" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" fill="none" stroke="#16323a" stroke-width="1.8" stroke-linejoin="round"/><path d="M7.5 15h9l1.6 3a1.3 1.3 0 0 1-1.2 2H7.1a1.3 1.3 0 0 1-1.2-2z" fill="#3fae86"/></svg>مختبر التجويد</span></div>
@@ -235,6 +241,7 @@ html.locked-out .ov#clLogin{background:linear-gradient(180deg,#eef3f2,#dfe9e8)}
     <input id="clCode" placeholder="رمز الانضمام من معلمتكِ" hidden>
     <div class="err" id="clErr"></div>
     <button class="btn am" id="clGo" style="width:100%">ادخلي ‹</button>
+    <a class="lg-teacher" href="teacher.html">أنا المعلمة: الدخول إلى لوحة المعلمة</a>
   </form>
 </div>
 <div class="ov" id="hwOv" hidden><div class="hw" id="hwWrap"></div></div>
@@ -499,7 +506,7 @@ var BY={};LESSONS.forEach(function(l,i){l.n=i+1;BY[l.id]=l;var m=META[l.id];l.sy
 function heardList(){try{return JSON.parse(store('lab-listened')||'[]');}catch(e){return [];}}
 function heard(id){return heardList().indexOf(id)>=0;}
 function prevOf(l){var i=LESSONS.indexOf(l);return i>0?LESSONS[i-1]:null;}
-function unlocked(l){var p=prevOf(l);return !p||heard(p.id);}
+function unlocked(l){if(isT())return true;var p=prevOf(l);return !p||heard(p.id);}
 function note(t){var d=document.createElement('div');d.className='lab-toast';d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},2600);}
 function level(id){if(stamps()[id])return 1;if(store('lab-first-'+id))return .62;if(store('lab-seen-'+id))return .3;return 0;}
 /* قارورة بسائل يملؤها التقدم */
@@ -565,7 +572,7 @@ function home(){
       b.innerHTML=(op?(f===1?'<span class="ok">أتقنتِ</span>':''):'<span class="lk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>')+vessel(l.ves,l.c,f,f===1)+elTile(l);sh.appendChild(b);});
     var cols=window.innerWidth>=600?4:3,fill=(cols-L.length%cols)%cols;for(var k=0;k<fill;k++){var e=E('div','ves');e.style.pointerEvents='none';sh.appendChild(e);}
     app.appendChild(sh);
-    if(lv===1){var need=LESSONS.filter(function(x){return x.lvl===1||lv2Open();}),got=need.filter(function(x){return S[x.id];}).length,gOpen=got===need.length;
+    if(lv===1){var need=LESSONS.filter(function(x){return x.lvl===1||lv2Open();}),got=need.filter(function(x){return S[x.id];}).length,gOpen=isT()||got===need.length;
       var gk=H(gOpen?'a':'button','games-link'+(gOpen?'':' gl-lock'),'<span class="gl-i">'+(gOpen?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.6 15h8.8"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>')+'</span><span class="gl-t"><b>ساحة الألعاب الشاملة</b><span>'+(gOpen?'ألعاب تجمع أحكام الدروس كلها':'تُفتح بعد إتقان الدروس كلها · أتقنتِ '+ar(got)+' من '+ar(need.length))+'</span></span><span class="gl-a">'+(gOpen?'←':'')+'</span>');
       if(gOpen)gk.href='ساحة-الألعاب.html';else{gk.type='button';gk.onclick=function(){note('أتقني الدروس كلها (اجتازي تقرير الاختبار في كل درس) لتُفتح ساحة الألعاب');};}
       app.appendChild(gk);}
@@ -576,7 +583,8 @@ function home(){
 
 /* ===== التنقل ===== */
 function go(id,tab){location.hash=id?('#'+id+(tab?'/'+tab:'')):'';}
-function lv2Open(){try{return localStorage.getItem('lab-lv2')==='1';}catch(e){return false;}}
+function isT(){try{return !!localStorage.getItem('lab-admin')&&!localStorage.getItem('lab-token');}catch(e){return false;}}
+function lv2Open(){if(isT())return true;try{return localStorage.getItem('lab-lv2')==='1';}catch(e){return false;}}
 window.__lv2Open=lv2Open;
 function route(){
   var h=decodeURIComponent(location.hash.slice(1)).split('/');
@@ -591,6 +599,7 @@ $('#brand').addEventListener('click',function(){go('');});
 
 /* ===== تأكيد الاستماع لدرس التليجرام ===== */
 function listenBox(l){
+  if(isT())return H('div','tmode','<b>وضع المعلمة:</b> كل الدروس والألعاب مفتوحة لكِ، ولا تُحفظ إجاباتكِ في نتائج البنات.');
   var box=E('div','listen');
   function paint(){
     box.innerHTML='';
@@ -1018,7 +1027,7 @@ route();
   var fs=+(ls('lab-fs')||0);function applyFs(){document.documentElement.classList.remove('fs1','fs2');if(fs)document.documentElement.classList.add('fs'+fs);fsB.textContent=['أ+','أ++','أ'][fs];}
   applyFs();fsB.addEventListener('click',function(){fs=(fs+1)%3;ls('lab-fs',String(fs));applyFs();});
   function setMe(){meB.innerHTML='';if(!tok){meB.textContent='تسجيل الدخول';return;}var d=E('span','cl-sync'+(queue().length?' off':''));meB.appendChild(d);meB.appendChild(document.createTextNode(me||''));}
-  meB.addEventListener('click',function(){if(!tok){showLogin();return;}if(confirm('تسجيل الخروج من حساب «'+me+'»؟'))logout();});
+  meB.addEventListener('click',function(){if(!tok&&ls('lab-admin')){location.href='teacher.html';return;}if(!tok){showLogin();return;}if(confirm('تسجيل الخروج من حساب «'+me+'»؟'))logout();});
   /* ===== الدخول ===== */
   var ov=document.getElementById('clLogin'),form=document.getElementById('clForm'),err=document.getElementById('clErr'),go=document.getElementById('clGo');
   ov.addEventListener('click',function(e){if(e.target===ov&&!REQUIRE_LOGIN)ov.hidden=true;});
@@ -1146,7 +1155,23 @@ route();
   /* ===== إعدادات المعلمة (فتح المستوى الثاني) ===== */
   rpc('public_settings',{}).then(function(st){var v=st&&st.level2_open?'1':'0';if(ls('lab-lv2')!==v){ls('lab-lv2',v);if(window.__labRefresh&&!/^#[a-z]+\/(quiz|micro|lab)/.test(location.hash))window.__labRefresh();}}).catch(function(){});
   /* ===== البدء ===== */
-  if(!tok){setMe();if(REQUIRE_LOGIN)showLogin();}else{setMe();sync();flush();}
+  var TEACH=!tok&&!!ls('lab-admin');
+  if(TEACH){hwB.hidden=true;meB.textContent='المعلمة';}
+  else if(!tok){setMe();if(REQUIRE_LOGIN)showLogin();}else{setMe();sync();flush();}
+  /* ===== تثبيت التطبيق ===== */
+  var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+  if(!standalone){
+    var inst=E('button','cl-chip inst','تثبيت');inst.setAttribute('aria-label','تثبيت التطبيق');inst.type='button';inst.hidden=true;bar.insertBefore(inst,bar.children[1]||null);
+    var dp=null;
+    window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;inst.hidden=false;});
+    var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(ios)inst.hidden=false;
+    inst.addEventListener('click',function(){
+      if(dp){dp.prompt();dp.userChoice.then(function(){dp=null;inst.hidden=true;});return;}
+      var t=E('div','ios-tip');t.innerHTML='<b>لتثبيت التطبيق على الآيفون:</b><br>١. افتحي الموقع من متصفح سفاري.<br>٢. اضغطي زرَّ المشاركة (المربع الذي فيه سهم للأعلى) أسفل الشاشة.<br>٣. اختاري «إضافة إلى الشاشة الرئيسية».';var x=E('button',null,'حسنًا');x.onclick=function(){t.remove();};t.appendChild(x);document.body.appendChild(t);
+    });
+    window.addEventListener('appinstalled',function(){inst.hidden=true;});
+  }
   if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
 

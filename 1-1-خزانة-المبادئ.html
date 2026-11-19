@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f3b46">
 <title>خزانة المبادئ العشرة | مختبر التجويد</title>
-<script>(function(){var O=['mabadi','maratib','noon','meem','madd','makharij','sifat','alaqat','wasl','tafkheem','waqf'],g='mabadi',ok=false;try{var L=localStorage,t=L.getItem('lab-token');if(t){if(g==='all'){var st=JSON.parse(L.getItem('lab-stamps')||'{}'),n=L.getItem('lab-lv2')==='1'?O.length:5;ok=O.slice(0,n).every(function(i){return st[i]})}else{var i=O.indexOf(g),h=JSON.parse(L.getItem('lab-listened')||'[]');ok=i<=0||h.indexOf(O[i-1])>=0}}}catch(e){}if(!ok)location.replace('index.html'+(g==='all'?'':'#'+g));})();</script>
+<script>(function(){var O=['mabadi','maratib','noon','meem','madd','makharij','sifat','alaqat','wasl','tafkheem','waqf'],g='mabadi',ok=false;try{var L=localStorage,t=L.getItem('lab-token');if(!t&&L.getItem('lab-admin'))ok=true;else if(t){if(g==='all'){var st=JSON.parse(L.getItem('lab-stamps')||'{}'),n=L.getItem('lab-lv2')==='1'?O.length:5;ok=O.slice(0,n).every(function(i){return st[i]})}else{var i=O.indexOf(g),h=JSON.parse(L.getItem('lab-listened')||'[]');ok=i<=0||h.indexOf(O[i-1])>=0}}}catch(e){}if(!ok)location.replace('index.html'+(g==='all'?'':'#'+g));})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Amiri+Quran&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -251,7 +251,7 @@ var CLOUD='https://ostldlkpvxbjyhcvpuue.supabase.co',CKEY='eyJhbGciOiJIUzI1NiIsI
 function report(game,score,max){
   var tok=null,el=$('#sent');try{tok=localStorage.getItem('lab-token')}catch(e){}
   if(!el)return;
-  if(!tok){el.textContent='لم تُرسَل النتيجة: سجِّلي الدخول في المختبر.';return}
+  if(!tok){var adm=null;try{adm=localStorage.getItem('lab-admin')}catch(e){}el.textContent=adm?'وضع المعلمة: لا تُحفظ نتيجتكِ في نتائج البنات.':'لم تُرسَل النتيجة: سجِّلي الدخول في المختبر.';return}
   el.textContent='جارٍ إرسال نتيجتكِ إلى معلمتكِ…';
   fetch(CLOUD+'/rest/v1/rpc/tj_save_game',{method:'POST',headers:{apikey:CKEY,Authorization:'Bearer '+CKEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:tok,p_game:game,p_score:score,p_max:max})})
     .then(function(r){el.textContent=r.ok?'وصلت نتيجتكِ إلى معلمتكِ.':'تعذَّر إرسال النتيجة، حاولي لاحقًا.'})
