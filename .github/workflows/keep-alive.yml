@@ -10,6 +10,6 @@ jobs:
     steps:
       - name: طلب صغير لقاعدة البيانات
         run: |
-          K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdGxkbGtwdnhianloY3ZwdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyMTc2NTIsImV4cCI6MjEwOTc5MzY1Mn0.SWK6wV-vjLasNN3sOOXrRVOPM4_1PjySYxo5ED1qPE8'
-          curl -sS -m 30 -X POST "https://ostldlkpvxbjyhcvpuue.supabase.co/rest/v1/rpc/tj_public_settings" \
+          K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyaHpqYXNma290cWxjdHN0Z3l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyOTExNDksImV4cCI6MjExMDg2NzE0OX0.pK694weHk2VM_Lvg5axzMYllQOGcBh2F9OKMhq4_ogw'
+          curl -sS -m 30 -X POST "https://irhzjasfkotqlctstgyw.supabase.co/rest/v1/rpc/tf_public_settings" \
             -H "apikey: $K" -H "Authorization: Bearer $K" -H "Content-Type: application/json" -d '{}' -w "\n%{http_code}\n"
