@@ -1,0 +1,15 @@
+# يُبقي قاعدة بيانات التحفة والمختبر نشطة، لأن Supabase يوقف المشروع المجاني إذا لم يُستخدم أسبوعًا
+name: إبقاء قاعدة البيانات نشطة
+on:
+  schedule:
+    - cron: "17 6 */2 * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: طلب صغير لقاعدة البيانات
+        run: |
+          K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zdGxkbGtwdnhianloY3ZwdXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyMTc2NTIsImV4cCI6MjEwOTc5MzY1Mn0.SWK6wV-vjLasNN3sOOXrRVOPM4_1PjySYxo5ED1qPE8'
+          curl -sS -m 30 -X POST "https://ostldlkpvxbjyhcvpuue.supabase.co/rest/v1/rpc/tj_public_settings" \
+            -H "apikey: $K" -H "Authorization: Bearer $K" -H "Content-Type: application/json" -d '{}' -w "\n%{http_code}\n"
